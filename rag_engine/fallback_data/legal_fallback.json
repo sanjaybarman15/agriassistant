@@ -1,0 +1,136 @@
+[
+  {
+    "topic": "notice_period",
+    "document_type": "employment_agreement",
+    "simple_answer": "Notice period is the time you or the employer must give before ending the job. It affects resignation, final settlement, and smooth transition.",
+    "red_flags": [
+      "Employee notice much longer than employer notice",
+      "High penalty for early resignation",
+      "No buyout option"
+    ],
+    "practical_advice": [
+      "Check if notice buyout is allowed",
+      "Confirm final salary settlement timeline",
+      "Compare employee and employer notice periods"
+    ],
+    "negotiation_tips": [
+      "Try reducing 90 days to 30 days",
+      "Ask for written buyout clause",
+      "Avoid one-sided resignation penalties"
+    ],
+    "risk_level": "medium",
+    "user_questions": [
+      "How many days notice do I need to give?",
+      "Can I resign early?",
+      "Is there any penalty for resignation?"
+    ]
+  },
+
+  {
+    "topic": "termination",
+    "document_type": "employment_agreement",
+    "simple_answer": "Termination explains when the company or employee can end employment and whether notice, warning, or compensation is required.",
+    "red_flags": [
+      "Immediate termination without warning",
+      "Broad termination reasons",
+      "No written warning process"
+    ],
+    "practical_advice": [
+      "Check if written notice is mandatory",
+      "Confirm compensation in lieu of notice",
+      "Look for appeal or review process"
+    ],
+    "negotiation_tips": [
+      "Ask for written warning clause",
+      "Avoid vague termination reasons",
+      "Request fair notice period"
+    ],
+    "risk_level": "high",
+    "user_questions": [
+      "Can the company terminate me without warning?",
+      "Can I be fired immediately?",
+      "What happens if I am terminated?"
+    ]
+  },
+
+  {
+    "topic": "payment_terms",
+    "document_type": "service_agreement",
+    "simple_answer": "Payment terms define how much is paid, when payment happens, delay penalties, taxes, and refund conditions.",
+    "red_flags": [
+      "No payment timeline",
+      "Hidden charges",
+      "No refund policy"
+    ],
+    "practical_advice": [
+      "Confirm invoice/payment proof process",
+      "Check payment milestone clarity",
+      "Understand tax responsibilities"
+    ],
+    "negotiation_tips": [
+      "Ask for milestone-based payment",
+      "Request late payment penalties",
+      "Avoid unclear tax obligations"
+    ],
+    "risk_level": "high",
+    "user_questions": [
+      "When will I get paid?",
+      "Are taxes included?",
+      "Is there any late payment penalty?"
+    ]
+  },
+
+  {
+    "topic": "liability",
+    "document_type": "service_agreement",
+    "simple_answer": "Liability defines who is responsible if financial loss, legal issues, or service failure happens.",
+    "red_flags": [
+      "Unlimited liability",
+      "One-sided legal responsibility",
+      "No damage limit"
+    ],
+    "practical_advice": [
+      "Check if liability cap exists",
+      "Look for force majeure protection",
+      "Avoid one-party-only responsibility"
+    ],
+    "negotiation_tips": [
+      "Ask for capped liability",
+      "Request shared responsibility clauses",
+      "Avoid unlimited financial exposure"
+    ],
+    "risk_level": "high",
+    "user_questions": [
+      "Who is responsible if something goes wrong?",
+      "Is liability unlimited?",
+      "How much risk am I taking?"
+    ]
+  },
+
+  {
+    "topic": "confidentiality",
+    "document_type": "nda",
+    "simple_answer": "Confidentiality prevents sensitive information from being shared outside the agreed purpose.",
+    "red_flags": [
+      "Unlimited confidentiality duration",
+      "Very broad confidential definition",
+      "No disclosure exceptions"
+    ],
+    "practical_advice": [
+      "Check duration of confidentiality",
+      "Understand legal disclosure exceptions",
+      "Confirm scope of protected data"
+    ],
+    "negotiation_tips": [
+      "Ask for reasonable confidentiality duration",
+      "Clarify public information exceptions",
+      "Avoid unlimited obligations"
+    ],
+    "risk_level": "medium",
+    "user_questions": [
+      "What information is confidential?",
+      "How long does NDA continue?",
+      "Can I share this with my team?"
+    ]
+  }
+]
