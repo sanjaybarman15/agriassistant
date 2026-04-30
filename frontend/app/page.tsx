@@ -16,6 +16,7 @@ export default function RootPage() {
       router.push('/login');
     } else if (role) {
       // Role-based redirection
+      console.log('Redirecting based on role:', role);
       switch (role) {
         case 'farmer':
           router.push('/dashboard/farmer');
@@ -30,10 +31,13 @@ export default function RootPage() {
           router.push('/dashboard/super-admin');
           break;
         default:
-          // Fallback if role is not recognized
           console.error('Unknown role:', role);
           break;
       }
+    } else {
+      // User is logged in but role is missing - might be a sync delay
+      console.log('User logged in but role missing, retrying fetch...');
+      useAuthStore.getState().fetchProfile(user.id);
     }
   }, [user, role, isLoading, router]);
 

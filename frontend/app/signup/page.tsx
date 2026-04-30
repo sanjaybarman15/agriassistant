@@ -34,26 +34,33 @@ export default function SignupPage() {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Signup failed');
 
-      // 2. Create Profile
+      // 2. Create Profile manually (since trigger is removed)
       const { error: profileError } = await supabase.from('profiles').insert({
         id: authData.user.id,
         full_name: fullName,
         role: role,
-        preferred_language: 'en', // default
+        preferred_language: 'en',
       });
 
-      if (profileError) throw profileError;
-
-      // 3. If farmer, create a placeholder farmer record (can be expanded later)
-      if (role === 'farmer') {
-        await supabase.from('farmers').insert({
-          profile_id: authData.user.id,
-          village: 'Default Village', // Placeholder to be updated in dashboard
-        });
+      if (profileError) {
+        console.error('Database Profile Insert Error:', profileError);
+        throw new Error(`Auth worked, but database profile failed: ${profileError.message}`);
       }
 
-      router.push('/login?message=Check your email to confirm your account');
+      console.log('Profile created successfully!');
+
+      // 3. If farmer, create a placeholder farmer record
+      if (role === 'farmer') {
+        const { error: farmerError } = await supabase.from('farmers').insert({
+          profile_id: authData.user.id,
+          village: 'Default Village',
+        });
+        if (farmerError) console.warn('Farmer record creation failed:', farmerError);
+      }
+
+      router.push('/login?message=Account created successfully!');
     } catch (err: any) {
+      console.error('Signup Error Details:', err);
       setError(err.message || 'An error occurred during signup');
     } finally {
       setLoading(false);
