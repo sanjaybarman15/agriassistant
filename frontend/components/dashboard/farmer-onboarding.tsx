@@ -100,19 +100,38 @@ export function FarmerOnboarding({ onComplete }: { onComplete: () => void }) {
 
     setIsSaving(true);
     try {
-      const updateData: any = {
+      const upsertData: any = {
+        profile_id: user.id, // Ensure ID is present for upsert
         district_id: districtId,
         village: village,
       };
 
       if (coords) {
-        updateData.village_location = `POINT(${coords.lon} ${coords.lat})`;
+        upsertData.village_location = `POINT(${coords.lon} ${coords.lat})`;
       }
 
-      const { error } = await supabase
+      // 1. Check if the farmer record already exists
+      const { data: existingFarmer } = await supabase
         .from('farmers')
-        .update(updateData)
-        .eq('profile_id', user.id);
+        .select('profile_id')
+        .eq('profile_id', user.id)
+        .maybeSingle();
+
+      let error;
+      if (existingFarmer) {
+        // 2a. If it exists, update it
+        const { error: updateError } = await supabase
+          .from('farmers')
+          .update(upsertData)
+          .eq('profile_id', user.id);
+        error = updateError;
+      } else {
+        // 2b. If it doesn't exist, insert it
+        const { error: insertError } = await supabase
+          .from('farmers')
+          .insert(upsertData);
+        error = insertError;
+      }
 
       if (error) throw error;
       onComplete();
