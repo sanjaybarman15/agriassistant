@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState('');
@@ -34,7 +33,7 @@ export default function SignupPage() {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Signup failed');
 
-      // 2. Create Profile manually (since trigger is removed)
+      // 2. Create Profile manually
       const { error: profileError } = await supabase.from('profiles').insert({
         id: authData.user.id,
         full_name: fullName,
@@ -42,25 +41,20 @@ export default function SignupPage() {
         preferred_language: 'en',
       });
 
-      if (profileError) {
-        console.error('Database Profile Insert Error:', profileError);
-        throw new Error(`Auth worked, but database profile failed: ${profileError.message}`);
-      }
+      if (profileError) throw profileError;
 
-      console.log('Profile created successfully!');
-
-      // 3. If farmer, create a placeholder farmer record
+      // 3. Create Farmer placeholder
       if (role === 'farmer') {
         const { error: farmerError } = await supabase.from('farmers').insert({
           profile_id: authData.user.id,
-          village: 'Default Village',
+          // District and Village are NULL for now, will be set in Stage 2
         });
         if (farmerError) console.warn('Farmer record creation failed:', farmerError);
       }
-
-      router.push('/login?message=Account created successfully!');
+      
+      router.push('/login?message=Account created successfully! Please sign in.');
     } catch (err: any) {
-      console.error('Signup Error Details:', err);
+      console.error('Signup Error:', err);
       setError(err.message || 'An error occurred during signup');
     } finally {
       setLoading(false);
@@ -69,7 +63,6 @@ export default function SignupPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden">
-      {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <Image
           src="/login-bg.png"

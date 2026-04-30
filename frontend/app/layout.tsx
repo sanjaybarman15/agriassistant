@@ -12,6 +12,8 @@ const fontMono = Geist_Mono({
   variable: "--font-mono",
 })
 
+import { Providers } from "@/components/providers"
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -24,9 +26,11 @@ export default function RootLayout({
       className={cn("antialiased", fontMono.variable, "font-sans", inter.variable)}
     >
       <body>
-        <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </ThemeProvider>
+        <Providers>
+          <ThemeProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </ThemeProvider>
+        </Providers>
       </body>
     </html>
   )
