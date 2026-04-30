@@ -6,21 +6,34 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config.settings import settings
-from app.api import chat, sessions, rag, stt, hr, tts
-
 # ---------------------------
-# ENV & LOGGING
+# ENV
 # ---------------------------
 load_dotenv(override=True)
+
 logger = logging.getLogger("uvicorn")
 
+
+# ---------------------------
+# HELPERS (KEEP YOUR ORIGINAL LOGIC)
+# ---------------------------
+def get_required_env(key: str) -> str:
+    value = os.getenv(key)
+    if not value:
+        raise RuntimeError(f"Missing required environment variable: {key}")
+    return value
+
+
 def is_production() -> bool:
-    return not settings.DEBUG
+    return os.getenv("ENVIRONMENT", "development").lower() == "production"
+
+
+API_PREFIX = os.getenv("API_PREFIX", "/api/v1").rstrip("/")
+
 
 # ---------------------------
 # STARTUP VALIDATION
@@ -28,23 +41,48 @@ def is_production() -> bool:
 async def startup_validation():
     required_envs = [
         "SUPABASE_URL",
+        "SUPABASE_ANON_KEY",
         "SUPABASE_SERVICE_ROLE_KEY",
-        "NVIDIA_API_KEY",
-        "DEFAULT_CHAT_MODEL"
+        "PIPELINE_VERSION",
+        "ROI_DETECTOR_VERSION",
+        "FEATURE_CLASSIFIER_VERSION",
+        "RULE_ENGINE_VERSION",
     ]
 
-    missing = [env for env in required_envs if not getattr(settings, env, None)]
+    missing = [env for env in required_envs if not os.getenv(env)]
     if missing:
-        logger.error(f"❌ CRITICAL: Missing environment variables: {missing}")
         raise RuntimeError(f"Missing environment variables: {missing}")
 
+    host = os.getenv("HOST", "127.0.0.1")
+    port = os.getenv("PORT", "8000")
+    version = os.getenv("VERSION", "1.0.0")
+    render_url = os.getenv("RENDER_EXTERNAL_URL")
+
     logger.info("===================================")
-    logger.info(f"🚀 {settings.APP_NAME} Backend Starting")
-    logger.info(f"Environment : {'Production' if is_production() else 'Development'}")
-    logger.info(f"Debug Mode  : {settings.DEBUG}")
-    logger.info(f"AI Model    : {settings.DEFAULT_CHAT_MODEL}")
-    logger.info(f"Supabase    : {settings.SUPABASE_URL}")
+    logger.info("🚀 ThyroVision Backend Starting")
+    logger.info(f"Environment : {os.getenv('ENVIRONMENT', 'development')}")
+    logger.info(f"Version     : {version}")
+    logger.info(f"API Prefix  : {API_PREFIX}")
+    logger.info(f"URL         : {render_url or f'http://{host}:{port}'}")
     logger.info("===================================")
+    logger.info(f"Pipeline    : {os.getenv('PIPELINE_VERSION')}")
+    logger.info(f"ROI Model   : {os.getenv('ROI_DETECTOR_VERSION')}")
+    logger.info(f"Classifier  : {os.getenv('FEATURE_CLASSIFIER_VERSION')}")
+    logger.info(f"Rule Engine : {os.getenv('RULE_ENGINE_VERSION')}")
+    logger.info(f"Mock Models : {os.getenv('MOCK_MODELS', 'false')}")
+    logger.info("===================================")
+
+    try:
+        i = celery.control.inspect(timeout=1.0)
+        nodes = i.ping() or {}
+        if nodes:
+            logger.info(f"Celery: ONLINE ({len(nodes)} workers)")
+        else:
+            logger.warning("Celery: OFFLINE")
+    except Exception as e:
+        logger.error(f"Celery error: {e}")
+    logger.info("===================================")
+
 
 # ---------------------------
 # LIFESPAN
@@ -52,18 +90,26 @@ async def startup_validation():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await startup_validation()
-    logger.info("✅ Startup complete. Ready for connections.")
+    logger.info("✅ Startup complete")
+
     yield
+
     logger.info("🛑 Shutting down...")
+
 
 # ---------------------------
 # FASTAPI APP
 # ---------------------------
 app = FastAPI(
-    title=settings.APP_NAME,
-    description="Sophisticated AI assistant backend powered by NVIDIA NIM.",
-    version="1.0.0",
+    title="ThyroVision AI Backend",
+    description="""
+    AI-powered thyroid ultrasound analysis system.
+
+    ⚠️ Clinical Decision Support Tool — Not a replacement for radiologists.
+    """,
+    version=os.getenv("VERSION", "1.0.0"),
     lifespan=lifespan,
+
     docs_url=None if is_production() else "/docs",
     redoc_url=None if is_production() else "/redoc",
     openapi_url=None if is_production() else "/openapi.json",
@@ -72,38 +118,34 @@ app = FastAPI(
 # ---------------------------
 # MIDDLEWARE
 # ---------------------------
-# Define origins explicitly to avoid middleware crashes
-origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-if settings.ALLOWED_ORIGINS:
-    if isinstance(settings.ALLOWED_ORIGINS, list):
-        origins.extend(settings.ALLOWED_ORIGINS)
-    else:
-        origins.append(settings.ALLOWED_ORIGINS)
+app.middleware("http")(request_id_middleware)
 
-frontend_url = os.getenv("FRONTEND_URL")
-if frontend_url:
-    origins.append(frontend_url)
+origins = os.getenv("CORS_ORIGINS", "").split(",")
+origins = [o.strip() for o in origins if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=list(set(origins)), # Remove duplicates
+    allow_origins=origins if origins else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
 # ---------------------------
-# ROUTERS
+# ROUTERS (VERSIONED)
 # ---------------------------
-app.include_router(chat.router)
-app.include_router(sessions.router)
-app.include_router(rag.router)
-app.include_router(stt.router)
-app.include_router(hr.router)
-app.include_router(tts.router)
+app.include_router(images_router, prefix=API_PREFIX)
+app.include_router(patients_router, prefix=API_PREFIX)
+app.include_router(inference_router, prefix=API_PREFIX)
+app.include_router(feedback_router, prefix=API_PREFIX)
+app.include_router(logs_router, prefix=API_PREFIX)
+app.include_router(reports.router, prefix=API_PREFIX)
+app.include_router(benchmark_router, prefix=API_PREFIX)
+app.include_router(profiles_router, prefix=API_PREFIX)
+app.include_router(explain_router, prefix=API_PREFIX)
+app.include_router(admin_router, prefix=API_PREFIX)
+
 
 # ---------------------------
 # HEALTH ROUTES
@@ -112,38 +154,70 @@ app.include_router(tts.router)
 async def root():
     return {
         "status": "ok",
-        "service": settings.APP_NAME,
-        "debug": settings.DEBUG
+        "service": "ThyroVision Backend",
+        "version": os.getenv("VERSION", "1.0.0"),
     }
+
 
 @app.get("/health", tags=["Health"])
 async def health():
-    return {"status": "healthy"}
+    return {"status": "ok"}
+
+
+@app.get("/ready", tags=["Health"])
+async def readiness():
+    try:
+        i = celery.control.inspect(timeout=1.0)
+        nodes = i.ping() or {}
+        celery_status = "online" if nodes else "offline"
+    except Exception:
+        celery_status = "error"
+
+    return {
+        "status": "ready",
+        "celery": celery_status,
+        "environment": os.getenv("ENVIRONMENT", "development"),
+    }
+
+
+# ---------------------------
+# FAVICON
+# ---------------------------
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse("favicon.ico")
+
 
 # ---------------------------
 # ERROR HANDLERS
 # ---------------------------
 @app.exception_handler(RequestValidationError)
 async def validation_error(request: Request, exc: RequestValidationError):
-    logger.error(f"Validation Error: {exc.errors()}")
+    log_event(
+        level="ERROR",
+        action="VALIDATION_ERROR",
+        metadata={"errors": exc.errors()},
+    )
     return JSONResponse(status_code=422, content={"detail": exc.errors()})
+
 
 @app.exception_handler(Exception)
 async def global_error(request: Request, exc: Exception):
     status_code = getattr(exc, "status_code", 500)
-    logger.error(f"Global Error: {str(exc)}", exc_info=True)
+
+    log_event(
+        level="FATAL" if status_code >= 500 else "ERROR",
+        action="SERVER_ERROR",
+        exception=exc,
+    )
 
     if not is_production():
         return JSONResponse(
             status_code=status_code,
-            content={"detail": str(exc), "type": type(exc).__name__},
+            content={"detail": str(exc)},
         )
 
     return JSONResponse(
         status_code=status_code,
         content={"detail": "Internal Server Error"},
     )
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="[IP_ADDRESS]", port=8000, reload=True)
