@@ -4,42 +4,57 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
-import { useAuthStore } from '@/store/use-auth-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-export default function LoginPage() {
+export default function SignupPage() {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const role = 'farmer'; // Default role for all new signups
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const { fetchProfile } = useAuthStore();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
+      // 1. Sign up user in Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
       });
 
       if (authError) throw authError;
+      if (!authData.user) throw new Error('Signup failed');
 
-      if (data.user) {
-        await fetchProfile(data.user.id);
-        // Redirect will happen automatically if we have a listener, 
-        // but we'll force it here for immediate UX.
-        // We'll determine the route in app/page.tsx or here.
-        router.push('/');
+      // 2. Create Profile
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: authData.user.id,
+        full_name: fullName,
+        role: role,
+        preferred_language: 'en', // default
+      });
+
+      if (profileError) throw profileError;
+
+      // 3. If farmer, create a placeholder farmer record (can be expanded later)
+      if (role === 'farmer') {
+        await supabase.from('farmers').insert({
+          profile_id: authData.user.id,
+          village: 'Default Village', // Placeholder to be updated in dashboard
+        });
       }
+
+      router.push('/login?message=Check your email to confirm your account');
     } catch (err: any) {
-      setError(err.message || 'An error occurred during login');
+      setError(err.message || 'An error occurred during signup');
     } finally {
       setLoading(false);
     }
@@ -61,13 +76,25 @@ export default function LoginPage() {
 
       <Card className="relative z-10 w-full max-w-md border-white/20 bg-white/10 text-white backdrop-blur-xl shadow-2xl">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-3xl font-bold tracking-tight">AgriAssistant</CardTitle>
+          <CardTitle className="text-3xl font-bold tracking-tight">Create Account</CardTitle>
           <CardDescription className="text-white/70">
-            AI-powered advisory for the Northeast farmer
+            Join the AgriAssistant community
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSignup} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName" className="text-white/90">Full Name</Label>
+              <Input
+                id="fullName"
+                type="text"
+                placeholder="John Doe"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+                className="border-white/20 bg-white/5 text-white placeholder:text-white/40 focus-visible:ring-emerald-500"
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email" className="text-white/90">Email</Label>
               <Input
@@ -81,9 +108,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-white/90">Password</Label>
-              </div>
+              <Label htmlFor="password" className="text-white/90">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -93,6 +118,7 @@ export default function LoginPage() {
                 className="border-white/20 bg-white/5 text-white placeholder:text-white/40 focus-visible:ring-emerald-500"
               />
             </div>
+
             {error && (
               <p className="text-sm font-medium text-red-400 text-center">{error}</p>
             )}
@@ -101,19 +127,16 @@ export default function LoginPage() {
               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white border-none shadow-lg transition-all duration-200"
               disabled={loading}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'Creating account...' : 'Create Account'}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 text-center text-sm text-white/60">
           <p>
-            Don't have an account?{" "}
-            <Button variant="link" onClick={() => router.push('/signup')} className="h-auto p-0 text-emerald-400">
-              Sign up
+            Already have an account?{" "}
+            <Button variant="link" onClick={() => router.push('/login')} className="h-auto p-0 text-emerald-400">
+              Sign in
             </Button>
-          </p>
-          <p>
-            Field workers and officers, please use your official credentials.
           </p>
         </CardFooter>
       </Card>
