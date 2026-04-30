@@ -36,16 +36,23 @@ export function SoilSampleDialog({ fieldId, fieldName }: { fieldId: string, fiel
     setIsSaving(true);
     setError(null);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User session not found');
+
       const { error: saveError } = await supabase.from('soil_records').insert({
         field_id: fieldId,
-        nitrogen: parseFloat(nitrogen),
-        phosphorus: parseFloat(phosphorus),
-        potassium: parseFloat(potassium),
+        submitted_by: user.id,
+        nitrogen_kg_ha: parseFloat(nitrogen),
+        phosphorus_kg_ha: parseFloat(phosphorus),
+        potassium_kg_ha: parseFloat(potassium),
         ph_level: parseFloat(ph),
-        test_date: new Date().toISOString().split('T')[0],
+        sample_date: new Date().toISOString().split('T')[0],
       });
 
-      if (saveError) throw saveError;
+      if (saveError) {
+        console.error('Supabase Error:', saveError);
+        throw new Error(saveError.message);
+      }
 
       // Invalidate both fields and soil records to refresh the UI
       queryClient.invalidateQueries({ queryKey: ['farmer_fields'] });

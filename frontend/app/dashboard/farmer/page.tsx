@@ -38,11 +38,11 @@ export default function FarmerDashboard() {
         .select(`
           *,
           soil_records (
-            nitrogen,
-            phosphorus,
-            potassium,
+            nitrogen_kg_ha,
+            phosphorus_kg_ha,
+            potassium_kg_ha,
             ph_level,
-            test_date
+            sample_date
           )
         `)
         .eq('farmer_id', farmer.id)
@@ -54,7 +54,7 @@ export default function FarmerDashboard() {
       return data.map(field => ({
         ...field,
         latest_soil: field.soil_records?.sort((a: any, b: any) => 
-          new Date(b.test_date).getTime() - new Date(a.test_date).getTime()
+          new Date(b.sample_date).getTime() - new Date(a.sample_date).getTime()
         )[0]
       }));
     },
@@ -201,15 +201,15 @@ export default function FarmerDashboard() {
                     <div className="flex gap-2 pt-1">
                       <div className="flex-1 bg-zinc-950/50 rounded p-2 text-center border border-zinc-800/50">
                         <p className="text-[8px] text-zinc-600 font-bold">N</p>
-                        <p className="text-xs font-bold text-emerald-400">{field.latest_soil.nitrogen}</p>
+                        <p className="text-xs font-bold text-emerald-400">{field.latest_soil.nitrogen_kg_ha}</p>
                       </div>
                       <div className="flex-1 bg-zinc-950/50 rounded p-2 text-center border border-zinc-800/50">
                         <p className="text-[8px] text-zinc-600 font-bold">P</p>
-                        <p className="text-xs font-bold text-blue-400">{field.latest_soil.phosphorus}</p>
+                        <p className="text-xs font-bold text-blue-400">{field.latest_soil.phosphorus_kg_ha}</p>
                       </div>
                       <div className="flex-1 bg-zinc-950/50 rounded p-2 text-center border border-zinc-800/50">
                         <p className="text-[8px] text-zinc-600 font-bold">K</p>
-                        <p className="text-xs font-bold text-orange-400">{field.latest_soil.potassium}</p>
+                        <p className="text-xs font-bold text-orange-400">{field.latest_soil.potassium_kg_ha}</p>
                       </div>
                     </div>
                   )}
