@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/use-auth-store';
 import { FarmerOnboarding } from '@/components/dashboard/farmer-onboarding';
 import { AddFieldDialog } from '@/components/dashboard/add-field-dialog';
 import { SoilSampleDialog } from '@/components/dashboard/soil-sample-dialog';
+import { AIAdvisoryPanel } from '@/components/dashboard/ai-advisory-panel';
 import { Loader2, Map as MapIcon, Shovel, ThermometerSun, Wind, FlaskConical, ChevronRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
@@ -228,6 +229,8 @@ export default function FarmerDashboard() {
           </div>
         )}
       </div>
+
+      <AIAdvisoryPanel farmerId={farmer?.id} />
     </div>
   );
 }
