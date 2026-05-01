@@ -6,7 +6,7 @@ load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.endpoints import recommendations, advisory
+from app.api.endpoints import recommendations, advisory, mandi
 
 app = FastAPI(
     title="AgriAssistant AI Backend",
@@ -26,6 +26,7 @@ app.add_middleware(
 # Include Routers
 app.include_router(recommendations.router, prefix="/api/v1")
 app.include_router(advisory.router, prefix="/api/v1")
+app.include_router(mandi.router, prefix="/api/v1")
 
 @app.get("/")
 async def root():

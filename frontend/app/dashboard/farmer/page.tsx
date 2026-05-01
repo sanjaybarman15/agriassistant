@@ -5,8 +5,10 @@ import { useAuthStore } from '@/store/use-auth-store';
 import { FarmerOnboarding } from '@/components/dashboard/farmer-onboarding';
 import { AddFieldDialog } from '@/components/dashboard/add-field-dialog';
 import { SoilSampleDialog } from '@/components/dashboard/soil-sample-dialog';
+import { RecommendationDialog } from '@/components/dashboard/recommendation-dialog';
+import { MandiPricesWidget } from '@/components/dashboard/mandi-prices-widget';
 import { AIAdvisoryPanel } from '@/components/dashboard/ai-advisory-panel';
-import { Loader2, Map as MapIcon, Shovel, ThermometerSun, Wind, FlaskConical, ChevronRight } from 'lucide-react';
+import { Loader2, Map as MapIcon, Shovel, ThermometerSun, Wind, FlaskConical, ChevronRight, Store } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 export default function FarmerDashboard() {
@@ -161,73 +163,93 @@ export default function FarmerDashboard() {
         </div>
       </div>
 
-      {/* Fields List */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold flex items-center gap-2">
-          Registered Fields 
-          <span className="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-1 rounded uppercase tracking-tighter font-bold">Manage Your Plots</span>
-        </h2>
-        {isFieldsLoading ? (
-          <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-zinc-500" /></div>
-        ) : fields.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {fields.map((field) => (
-              <div key={field.id} className="group relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 hover:border-emerald-500/50 transition-all">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-lg">{field.name}</h4>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-zinc-800 text-zinc-400 border border-zinc-700">
-                      {field.soil_type}
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="space-y-1">
-                      <p className="text-[10px] uppercase tracking-wider text-zinc-600 font-bold">Area</p>
-                      <p className="text-white font-medium">{field.area_bigha} Bigha</p>
+      {/* Main Content Grid */}
+      <div className="grid gap-8 lg:grid-cols-3">
+        {/* Fields List (Left 2/3) */}
+        <div className="lg:col-span-2 space-y-4">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            Registered Fields 
+            <span className="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-1 rounded uppercase tracking-tighter font-bold">Manage Your Plots</span>
+          </h2>
+          {isFieldsLoading ? (
+            <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-zinc-500" /></div>
+          ) : fields.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {fields.map((field) => (
+                <div key={field.id} className="group relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 hover:border-emerald-500/50 transition-all">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-lg">{field.name}</h4>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-zinc-800 text-zinc-400 border border-zinc-700">
+                        {field.soil_type}
+                      </span>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-[10px] uppercase tracking-wider text-zinc-600 font-bold">Soil Health</p>
-                      {field.latest_soil ? (
-                        <p className="text-emerald-500 font-bold flex items-center gap-1">
-                          pH {field.latest_soil.ph_level} <ChevronRight className="h-3 w-3" />
-                        </p>
-                      ) : (
-                        <p className="text-zinc-500 font-medium italic">No Data</p>
-                      )}
+                    
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="space-y-1">
+                        <p className="text-[10px] uppercase tracking-wider text-zinc-600 font-bold">Area</p>
+                        <p className="text-white font-medium">{field.area_bigha} Bigha</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] uppercase tracking-wider text-zinc-600 font-bold">Soil Health</p>
+                        {field.latest_soil ? (
+                          <p className="text-emerald-500 font-bold flex items-center gap-1">
+                            pH {field.latest_soil.ph_level} <ChevronRight className="h-3 w-3" />
+                          </p>
+                        ) : (
+                          <p className="text-zinc-500 font-medium italic">No Data</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {field.latest_soil && (
-                    <div className="flex gap-2 pt-1">
-                      <div className="flex-1 bg-zinc-950/50 rounded p-2 text-center border border-zinc-800/50">
-                        <p className="text-[8px] text-zinc-600 font-bold">N</p>
-                        <p className="text-xs font-bold text-emerald-400">{field.latest_soil.nitrogen_kg_ha}</p>
+                    {field.latest_soil && (
+                      <div className="flex gap-2 pt-1">
+                        <div className="flex-1 bg-zinc-950/50 rounded p-2 text-center border border-zinc-800/50">
+                          <p className="text-[8px] text-zinc-600 font-bold">N</p>
+                          <p className="text-xs font-bold text-emerald-400">{field.latest_soil.nitrogen_kg_ha}</p>
+                        </div>
+                        <div className="flex-1 bg-zinc-950/50 rounded p-2 text-center border border-zinc-800/50">
+                          <p className="text-[8px] text-zinc-600 font-bold">P</p>
+                          <p className="text-xs font-bold text-blue-400">{field.latest_soil.phosphorus_kg_ha}</p>
+                        </div>
+                        <div className="flex-1 bg-zinc-950/50 rounded p-2 text-center border border-zinc-800/50">
+                          <p className="text-[8px] text-zinc-600 font-bold">K</p>
+                          <p className="text-xs font-bold text-orange-400">{field.latest_soil.potassium_kg_ha}</p>
+                        </div>
                       </div>
-                      <div className="flex-1 bg-zinc-950/50 rounded p-2 text-center border border-zinc-800/50">
-                        <p className="text-[8px] text-zinc-600 font-bold">P</p>
-                        <p className="text-xs font-bold text-blue-400">{field.latest_soil.phosphorus_kg_ha}</p>
-                      </div>
-                      <div className="flex-1 bg-zinc-950/50 rounded p-2 text-center border border-zinc-800/50">
-                        <p className="text-[8px] text-zinc-600 font-bold">K</p>
-                        <p className="text-xs font-bold text-orange-400">{field.latest_soil.potassium_kg_ha}</p>
-                      </div>
-                    </div>
-                  )}
+                    )}
 
-                  <div className="pt-2">
-                    <SoilSampleDialog fieldId={field.id} fieldName={field.name} />
+                    <div className="pt-4 space-y-2">
+                      <SoilSampleDialog fieldId={field.id} fieldName={field.name} />
+                      <RecommendationDialog 
+                        fieldId={field.id} 
+                        fieldName={field.name} 
+                        farmerId={farmer?.id}
+                        latestSoilRecordId={field.latest_soil?.id}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/20">
+              <MapIcon className="h-10 w-10 text-zinc-700 mb-4" />
+              <p className="text-zinc-500">No fields registered yet.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Mandi Prices (Right 1/3) */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            Market Rates
+            <span className="text-[10px] bg-orange-500/10 text-orange-500 px-2 py-1 rounded uppercase tracking-tighter font-bold">Live APMC</span>
+          </h2>
+          <div className="h-[600px]">
+            <MandiPricesWidget districtId={farmer?.district_id} />
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/20">
-            <MapIcon className="h-10 w-10 text-zinc-700 mb-4" />
-            <p className="text-zinc-500">No fields registered yet.</p>
-          </div>
-        )}
+        </div>
       </div>
 
       <AIAdvisoryPanel farmerId={farmer?.id} />
