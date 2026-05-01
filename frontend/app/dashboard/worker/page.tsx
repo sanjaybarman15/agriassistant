@@ -25,27 +25,33 @@ export default function FieldWorkerDashboard() {
   const { user, role } = useAuthStore();
 
   // 1. Fetch Field Worker Profile
-  const { data: worker, isLoading: isWorkerLoading } = useQuery({
+  const { data: worker, isLoading: isWorkerLoading, error: workerError } = useQuery({
     queryKey: ['worker_profile', user?.id],
     queryFn: async () => {
+      console.log("DEBUG: Fetching worker for profile_id:", user?.id);
       if (!user?.id) return null;
       
       const { data, error } = await supabase
         .from('field_workers')
         .select('*, districts(name)')
         .eq('profile_id', user.id)
-        .maybeSingle();
+        .maybeSingle(); // Using maybeSingle to avoid 406 errors
       
-      if (error) throw error;
+      if (error) {
+        console.error("DEBUG: Worker fetch error:", error);
+        throw error;
+      }
+      console.log("DEBUG: Worker found:", data);
       return data;
     },
     enabled: !!user?.id,
   });
 
   // 2. Fetch Assigned Farmers
-  const { data: farmers = [], isLoading: isFarmersLoading } = useQuery({
+  const { data: farmers = [], isLoading: isFarmersLoading, error: farmersError } = useQuery({
     queryKey: ['assigned_farmers', worker?.id],
     queryFn: async () => {
+      console.log("DEBUG: Fetching farmers for worker_id:", worker?.id);
       if (!worker?.id) return [];
       
       const { data, error } = await supabase
@@ -53,7 +59,11 @@ export default function FieldWorkerDashboard() {
         .select('*, profiles(full_name)')
         .eq('assigned_field_worker_id', worker.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error("DEBUG: Farmers fetch error:", error);
+        throw error;
+      }
+      console.log("DEBUG: Farmers found:", data);
       return data;
     },
     enabled: !!worker?.id,
@@ -67,18 +77,18 @@ export default function FieldWorkerDashboard() {
     );
   }
 
-  // Error State: Worker not linked
-  if (!worker && !isWorkerLoading && user) {
+  // Debug Error State
+  if (!worker && !isWorkerLoading) {
     return (
       <div className="p-8 max-w-2xl mx-auto mt-20 rounded-2xl border border-red-500/20 bg-red-500/5 text-center space-y-4">
         <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
-        <h2 className="text-xl font-bold text-white">Worker Profile Not Linked</h2>
+        <h2 className="text-xl font-bold text-white">Worker Profile Not Found</h2>
         <p className="text-zinc-400 text-sm">
-          Your account is logged in, but you aren't registered as a Field Worker in our records yet. 
-          <br/>Profile ID: <code className="text-emerald-500">{user.id}</code>
+          Your profile (ID: <code className="text-emerald-500">{user?.id}</code>) is not yet registered in the <code>field_workers</code> table. 
+          Please contact your administrator to link your account.
         </p>
         <Button onClick={() => window.location.reload()} variant="outline" className="border-zinc-800">
-          Retry Connection
+          Retry Sync
         </Button>
       </div>
     );

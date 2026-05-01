@@ -7,6 +7,7 @@ import { AddFieldDialog } from '@/components/dashboard/add-field-dialog';
 import { SoilSampleDialog } from '@/components/dashboard/soil-sample-dialog';
 import { RecommendationDialog } from '@/components/dashboard/recommendation-dialog';
 import { MandiPricesWidget } from '@/components/dashboard/mandi-prices-widget';
+import { PestAlertsWidget } from '@/components/dashboard/pest-alerts-widget';
 import { AIAdvisoryPanel } from '@/components/dashboard/ai-advisory-panel';
 import { Loader2, Map as MapIcon, Shovel, ThermometerSun, Wind, FlaskConical, ChevronRight, Store } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -162,6 +163,9 @@ export default function FarmerDashboard() {
           <p className="text-3xl font-bold">{isWeatherLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : currentTemp ? `${currentTemp}°C` : 'N/A'}</p>
         </div>
       </div>
+
+      {/* Emergency Alerts */}
+      <PestAlertsWidget districtId={farmer?.district_id} />
 
       {/* Main Content Grid */}
       <div className="grid gap-8 lg:grid-cols-3">

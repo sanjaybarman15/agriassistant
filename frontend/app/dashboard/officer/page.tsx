@@ -14,8 +14,7 @@ import {
   BellRing,
   Loader2,
   ChevronRight,
-  ShieldCheck,
-  LayoutDashboard
+  ShieldCheck
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -34,12 +33,11 @@ export default function DistrictOfficerDashboard() {
         .from('district_officers')
         .select('*, districts(id, name)')
         .eq('profile_id', user.id)
-        .maybeSingle();
+        .single();
       
       if (error) return null;
       return data;
     },
-    enabled: !!user?.id,
   });
 
   // 2. Fetch District Summary (From the View in schema.sql)
@@ -51,7 +49,7 @@ export default function DistrictOfficerDashboard() {
         .from('district_summaries')
         .select('*')
         .eq('district_id', officer.district_id)
-        .maybeSingle();
+        .single();
       
       if (error) return null;
       return data;
@@ -73,7 +71,7 @@ export default function DistrictOfficerDashboard() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-blue-500 mb-1">
-            <LayoutDashboard className="h-4 w-4" />
+            <Building2 className="h-4 w-4" />
             <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Administrative Control</span>
           </div>
           <h1 className="text-4xl font-black tracking-tight text-white">District Command Center</h1>
@@ -176,17 +174,18 @@ export default function DistrictOfficerDashboard() {
         <div className="space-y-6">
           <div className="p-6 rounded-2xl border border-zinc-800 bg-red-500/5 space-y-4">
             <h3 className="text-sm font-bold uppercase tracking-widest text-red-500 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" /> Active Alerts Status
+              <AlertTriangle className="h-4 w-4" /> Active Alerts
             </h3>
             <div className="space-y-3">
               <div className="p-3 rounded-xl bg-zinc-950/50 border border-red-500/20">
-                <p className="text-xs font-bold text-zinc-200">Outbreak Monitoring</p>
-                <p className="text-[10px] text-zinc-500 mt-1">Real-time alerts broadcasted to all farmers in the district.</p>
+                <p className="text-xs font-bold text-zinc-200">Rice Swarming Caterpillar</p>
+                <p className="text-[10px] text-zinc-500 mt-1">Status: Published • High Severity</p>
+                <Button variant="link" className="text-[10px] p-0 h-auto text-blue-500 mt-2">View Details <ChevronRight className="h-3 w-3" /></Button>
               </div>
             </div>
-            {officer?.district_id && user?.id && (
-              <IssueAlertModal districtId={officer.district_id} userId={user.id} />
-            )}
+            <Button className="w-full bg-red-600 hover:bg-red-500 text-white font-bold h-10 text-xs gap-2">
+               Publish New Alert
+            </Button>
           </div>
 
           <div className="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/20 space-y-4">
